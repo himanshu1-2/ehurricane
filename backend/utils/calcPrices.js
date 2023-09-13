@@ -2,7 +2,7 @@ function addDecimals(num) {
   return (Math.round(num * 100) / 100).toFixed(2);
 }
 
-export function calcPrices(orderItems) {
+module.exports = function calcPrices(orderItems) {
   // Calculate the items price
   const itemsPrice = addDecimals(
     orderItems.reduce((acc, item) => acc + item.price * item.qty, 0)

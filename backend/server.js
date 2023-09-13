@@ -1,18 +1,19 @@
-import path from 'path';
-import express from 'express';
-import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser';
+const path =  require('path');
+const express =  require('express');
+const dotenv =  require('dotenv');
+const cookieParser =  require('cookie-parser');
 dotenv.config();
-import connectDB from './config/db.js';
-import productRoutes from './routes/productRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-import orderRoutes from './routes/orderRoutes.js';
-import uploadRoutes from './routes/uploadRoutes.js';
-import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-import cors from 'cors';
-import Stripe from 'stripe';
-import { protect } from './middleware/authMiddleware.js';
-import Order from './models/orderModel.js';
+const connectDB =  require('./config/db.js');
+const productRoutes =  require('./routes/productRoutes.js');
+const userRoutes =  require('./routes/userRoutes.js');
+const orderRoutes =  require('./routes/orderRoutes.js');
+const uploadRoutes =  require('./routes/uploadRoutes.js');
+const { notFound, errorHandler } =  require('./middleware/errorMiddleware.js');
+const cors =  require('cors');
+const Stripe =  require('stripe');
+const { protect } =  require('./middleware/authMiddleware.js');
+const Order =  require('./models/orderModel.js');
+
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 5002;
 
@@ -55,8 +56,8 @@ const obj={
   mode:"payment",
   success_url: "http://localhost:3000/sucess",
   cancel_url: "http://localhost:3000/cancel",
-  
-  
+
+
 }
 
 console.log(obj)
@@ -79,7 +80,7 @@ console.log(obj)
 //   cancel_url: "http://localhost:3000/cancel",
 // });
 const session = await stripe.checkout.sessions.create(obj)
- 
+
   res.json({id:session.id})
 }
 catch(e){
@@ -90,7 +91,7 @@ app.post('/stripe_webhooks', express.json({type: 'application/json'}), async(req
   const event = request.body;
 
   // Handle the event
-  
+
 let  paymentIntent ;
   switch (event.type) {
     case 'payment_intent.succeeded':
@@ -110,7 +111,7 @@ let  paymentIntent ;
     console.log(paymentIntent)
   if(paymentIntent){
     //await Order.updateOne()
-    
+
   }
   // Return a response to acknowledge receipt of the event
   response.json({received: true});

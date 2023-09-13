@@ -1,5 +1,5 @@
 // @ts-check
-import { isValidObjectId } from 'mongoose';
+const { isValidObjectId } =  require('mongoose');
 
 /**
  * Checks if the req.params.id is a valid Mongoose ObjectId.
@@ -18,4 +18,4 @@ function checkObjectId(req, res, next) {
   next();
 }
 
-export default checkObjectId;
+module.exports= checkObjectId;
