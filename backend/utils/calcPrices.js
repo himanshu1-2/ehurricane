@@ -8,9 +8,9 @@ module.exports = function calcPrices(orderItems) {
     orderItems.reduce((acc, item) => acc + item.price * item.qty, 0)
   );
   // Calculate the shipping price
-  const shippingPrice = addDecimals(itemsPrice > 100 ? 0 : 10);
+  const shippingPrice = 0
   // Calculate the tax price
-  const taxPrice = addDecimals(Number((0.15 * itemsPrice).toFixed(2)));
+  const taxPrice = 0
   // Calculate the total price
   const totalPrice = (
     Number(itemsPrice) +

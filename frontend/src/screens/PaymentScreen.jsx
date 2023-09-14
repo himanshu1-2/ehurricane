@@ -17,7 +17,7 @@ const PaymentScreen = () => {
     }
   }, [navigate, shippingAddress]);
 
-  const [paymentMethod, setPaymentMethod] = useState('PayPal');
+  const [paymentMethod, setPaymentMethod] = useState('Stripe');
 
   const dispatch = useDispatch();
 
