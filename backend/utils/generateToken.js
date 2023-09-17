@@ -6,6 +6,5 @@ const generateToken = (userId) => {
   });
 
   // Set JWT as an HTTP-Only cookie
-
 };
 module.exports= generateToken;
