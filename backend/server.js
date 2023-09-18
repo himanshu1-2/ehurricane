@@ -54,8 +54,8 @@ const obj={
   customer:customer.id,
   line_items:lineItems,
   mode:"payment",
-  success_url: "http://localhost:3000/sucess",
-  cancel_url: "http://localhost:3000/cancel",
+  success_url: `${process.env.CLIENT_URL}/success`,
+  cancel_url: `${process.env.CLIENT_URL}/cancel`,
 
 
 }

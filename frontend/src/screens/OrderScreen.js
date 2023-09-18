@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { PayPalButton } from 'react-paypal-button-v2'
 import { Link } from 'react-router-dom'
-import { Row, Col, ListGroup, Image, Card, Button } from 'react-bootstrap'
+import { Row, Col, ListGroup, Image, Card, Button,ListGroupItem } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
+import {loadStripe} from '@stripe/stripe-js';
 import {
   getOrderDetails,
   payOrder,
@@ -69,7 +70,7 @@ const OrderScreen = ({ match, history }) => {
       dispatch(getOrderDetails(orderId))
     } else if (!order.isPaid) {
       if (!window.paypal) {
-        addPayPalScript()
+        //addPayPalScript()
       } else {
         setSdkReady(true)
       }
@@ -84,11 +85,37 @@ const OrderScreen = ({ match, history }) => {
   const deliverHandler = () => {
     dispatch(deliverOrder(order))
   }
+  const makePayment = async()=>{
+    const stripe = await loadStripe(process.env.REACT_APP_STRIPE_KEY );
+
+    const body = {
+        products:order
+    }
+    const headers = {
+        "Content-Type":"application/json"
+    }
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL
+    }/api/create-checkout-session/${orderId}`,{
+        method:"POST",
+        headers:headers,
+        body:JSON.stringify(body)
+    });
+
+    const session = await response.json();
+
+    const result = stripe.redirectToCheckout({
+        sessionId:session.id
+    });
+
+    if(result.error){
+        console.log(result.error);
+    }
+  }
 
   return loading ? (
     <Loader />
   ) : error ? (
-    <Message variant='danger'>{error}</Message>
+    <Message variant='danger'>{error.data.message}</Message>
   ) : (
     <>
       <h1>Order {order._id}</h1>
@@ -155,7 +182,7 @@ const OrderScreen = ({ match, history }) => {
                           </Link>
                         </Col>
                         <Col md={4}>
-                          {item.qty} x ${item.price} = ${item.qty * item.price}
+                          {item.qty} x ₹{item.price} = ₹{item.qty * item.price}
                         </Col>
                       </Row>
                     </ListGroup.Item>
@@ -174,41 +201,54 @@ const OrderScreen = ({ match, history }) => {
               <ListGroup.Item>
                 <Row>
                   <Col>Items</Col>
-                  <Col>${order.itemsPrice}</Col>
+                  <Col>Rs {order.itemsPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
                   <Col>Shipping</Col>
-                  <Col>${order.shippingPrice}</Col>
+                  <Col>Rs{order.shippingPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
                   <Col>Tax</Col>
-                  <Col>${order.taxPrice}</Col>
+                  <Col>Rs{order.taxPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
                   <Col>Total</Col>
-                  <Col>${order.totalPrice}</Col>
+                  <Col>Rs{order.totalPrice}</Col>
                 </Row>
               </ListGroup.Item>
               {!order.isPaid && (
-                <ListGroup.Item>
-                  {loadingPay && <Loader />}
-                  {!sdkReady ? (
-                    <Loader />
-                  ) : (
-                    <PayPalButton
-                      amount={order.totalPrice}
-                      onSuccess={successPaymentHandler}
-                    />
-                  )}
-                </ListGroup.Item>
+                // <ListGroup.Item>
+                //   {loadingPay && <Loader />}
+
+                //   {isPending ? (
+                //     <Loader />
+                //   ) : (
+                //     <div>
+                //       {/* THIS BUTTON IS FOR TESTING! REMOVE BEFORE PRODUCTION! */}
+                //       {/* <Button
+                //         style={{ marginBottom: '10px' }}
+                //         onClick={onApproveTest}
+                //       >
+                //         Test Pay Order
+                //       </Button> */}
+
+
+                //     </div>
+                //   )}
+                // </ListGroup.Item>
+                <ListGroupItem><div>
+                <Button onClick={makePayment} >Checkout</Button></div>
+               </ListGroupItem>
               )}
+
               {loadingDeliver && <Loader />}
+
               {userInfo &&
                 userInfo.isAdmin &&
                 order.isPaid &&
@@ -228,7 +268,8 @@ const OrderScreen = ({ match, history }) => {
         </Col>
       </Row>
     </>
-  )
-}
+  );
+};
+
 
 export default OrderScreen
