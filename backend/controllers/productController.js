@@ -1,6 +1,6 @@
 const asyncHandler =  require('../middleware/asyncHandler.js');
 const Product =  require('../models/productModel.js');
-
+const path = require('path');
 
 // @desc    Fetch all products
 // @route   GET /api/products
@@ -48,11 +48,14 @@ const getProductById = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
+  // use uploaded file if present, otherwise fallback to sample
+  const imagePath = req.file ? `/uploads/${req.file.filename}` : '/images/sample.jpg';
+
   const product = new Product({
     name: 'Sample name',
     price: 0,
     user: req.user._id,
-    image: '/images/sample.jpg',
+    image: imagePath,
     brand: 'Sample brand',
     category: 'Sample category',
     countInStock: 0,

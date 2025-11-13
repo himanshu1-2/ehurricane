@@ -33,7 +33,7 @@ const PaymentScreen = ({ history }) => {
           <Col>
             <Form.Check
               type='radio'
-              label='Stripe or Credit Card'
+              label='Gpay or Cod'
               id='PayPal'
               name='paymentMethod'
               value='PayPal'

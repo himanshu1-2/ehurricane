@@ -3,6 +3,8 @@ const Order =  require('../models/orderModel.js');
 const Product =  require('../models/productModel.js');
 const  calcPrices  =  require('../utils/calcPrices.js');
 
+
+
 const addOrderItems = asyncHandler(async (req, res) => {
   const {
     orderItems,
@@ -12,13 +14,39 @@ const addOrderItems = asyncHandler(async (req, res) => {
     taxPrice,
     shippingPrice,
     totalPrice,
-  } = req.body
+  } = req.body;
 
-  if (orderItems && orderItems.length === 0) {
-    res.status(400)
-    throw new Error('No order items')
-    return
-  } else {
+  if (!orderItems || orderItems.length === 0) {
+    res.status(400);
+    throw new Error('No order items');
+  }
+
+  try {
+    // Update stock and collect updated products
+    const updatedProducts = await Promise.all(
+      orderItems.map(async (item) => {
+        const product = await Product.findById(item.product);
+
+        if (!product) {
+          throw new Error(`Product not found: ${item.product}`);
+        }
+
+        if (product.countInStock < item.qty) {
+          throw new Error(`Insufficient stock for ${product.name}`);
+        }
+
+        // Atomic decrement and return updated doc
+        const updatedProduct = await Product.findByIdAndUpdate(
+          item.product,
+          { $inc: { countInStock: -item.qty } },
+          { new: true } // ensures updated value is returned
+        );
+
+       
+      })
+    );
+  
+    // Create order
     const order = new Order({
       orderItems,
       user: req.user._id,
@@ -28,13 +56,25 @@ const addOrderItems = asyncHandler(async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
-    })
+    });
+    
+    const createdOrder = await order.save();
 
-    const createdOrder = await order.save()
-
-    res.status(201).json(createdOrder)
+    // Return both order and updated product stocks
+    res.status(201).json(createdOrder);
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message || 'Order creation failed');
   }
-})
+});
+
+
+
+
+
+
+
+
 
 // @desc    Get order by ID
 // @route   GET /api/orders/:id
@@ -109,7 +149,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
 // @route   GET /api/orders
 // @access  Private/Admin
 const getOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({}).populate('user', 'id name')
+  const orders = await Order.find({}).populate('user', 'id name').sort({_id:-1})
   res.json(orders)
 })
 

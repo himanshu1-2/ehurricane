@@ -1,5 +1,7 @@
-const path =  require('path');
-const express =  require('express');
+const express = require('express');
+const path = require('path');
+const app = express();
+
 const dotenv =  require('dotenv');
 const cookieParser =  require('cookie-parser');
 dotenv.config();
@@ -19,7 +21,6 @@ const port = process.env.PORT || 5002;
 
 connectDB();
 
-const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -116,17 +117,18 @@ let  paymentIntent ;
   // Return a response to acknowledge receipt of the event
   response.json({received: true});
 });
-if (process.env.NODE_ENV === 'production') {
-  const __dirname = path.resolve();
-  app.use('/uploads', express.static('/var/data/uploads'));
-  app.use(express.static(path.join(__dirname, '/frontend/build')));
+const __root = path.resolve(); // consistent base path
 
+// serve uploaded files from backend/uploads in all environments
+app.use('/uploads', express.static(path.join(__root, 'uploads')));
+
+// keep production static setup for frontend after uploads middleware
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__root, '/frontend/build')));
   app.get('*', (req, res) =>
-    res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html'))
+    res.sendFile(path.resolve(__root, 'frontend', 'build', 'index.html'))
   );
 } else {
-  const __dirname = path.resolve();
-app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
   app.get('/', (req, res) => {
     res.send('API is running....');
   });

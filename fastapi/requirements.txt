@@ -1,0 +1,8 @@
+# ...new file...
+fastapi
+uvicorn[standard]
+motor
+python-dotenv
+pydantic
+pandas
+prophet

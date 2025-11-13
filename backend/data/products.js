@@ -71,6 +71,28 @@ const products = [
     rating: 4,
     numReviews: 12,
   },
+  {
+    name: 'Sample Product 1',
+    image: '/images/sample1.jpg',
+    description: 'Sample product 1 description',
+    brand: 'BrandA',
+    category: 'CategoryA',
+    price: 19.99,
+    countInStock: 100,
+    rating: 4.5,
+    numReviews: 10,
+  },
+  {
+    name: 'Sample Product 2',
+    image: '/images/sample2.jpg',
+    description: 'Sample product 2 description',
+    brand: 'BrandB',
+    category: 'CategoryB',
+    price: 29.99,
+    countInStock: 50,
+    rating: 4.0,
+    numReviews: 5,
+  },
 ];
 
-export default products;
+module.exports=products

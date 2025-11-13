@@ -52,17 +52,17 @@ const OrderScreen = ({ match, history }) => {
       history.push('/login')
     }
 
-    const addPayPalScript = async () => {
-      const { data: clientId } = await axios.get('/api/config/paypal')
-      const script = document.createElement('script')
-      script.type = 'text/javascript'
-      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}`
-      script.async = true
-      script.onload = () => {
-        setSdkReady(true)
-      }
-      document.body.appendChild(script)
-    }
+    // const addPayPalScript = async () => {
+    //   const { data: clientId } = await axios.get('/api/config/paypal')
+    //   const script = document.createElement('script')
+    //   script.type = 'text/javascript'
+    //   script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}`
+    //   script.async = true
+    //   script.onload = () => {
+    //     setSdkReady(true)
+    //   }
+    //   document.body.appendChild(script)
+    // }
 
     if (!order || successPay || successDeliver || order._id !== orderId) {
       dispatch({ type: ORDER_PAY_RESET })
@@ -77,39 +77,56 @@ const OrderScreen = ({ match, history }) => {
     }
   }, [dispatch, orderId, successPay, successDeliver, order])
 
-  const successPaymentHandler = (paymentResult) => {
-    console.log(paymentResult)
-    dispatch(payOrder(orderId, paymentResult))
-  }
+  // const successPaymentHandler = (paymentResult) => {
+  //   console.log(paymentResult)
+  //   dispatch(payOrder(orderId, paymentResult))
+  // }
 
   const deliverHandler = () => {
     dispatch(deliverOrder(order))
   }
+  
   const makePayment = async()=>{
-    const stripe = await loadStripe(process.env.REACT_APP_STRIPE_KEY );
+    history.push(`/success`);
+    // const stripe = await loadStripe(process.env.REACT_APP_STRIPE_KEY );
 
-    const body = {
-        products:order
+    // const body = {
+    //     products:order
+    // }
+    // const headers = {
+    //     "Content-Type":"application/json"
+    // }
+    // const response = await fetch(`${process.env.REACT_APP_BACKEND_URL
+    // }/api/create-checkout-session/${orderId}`,{
+    //     method:"POST",
+    //     headers:headers,
+    //     body:JSON.stringify(body)
+    // });
+
+    // const session = await response.json();
+
+    // const result = stripe.redirectToCheckout({
+    //     sessionId:session.id
+    // });
+
+    // if(result.error){
+    //     console.log(result.error);
+    // }
+  }
+
+  const markPaidAdmin = async () => {
+   
+
+    // minimal paymentResult payload backend expects (matches PayPal-like shape)
+    const paymentResult = {
+      id: `manual-${Date.now()}`,
+      status: 'COMPLETED',
+      update_time: new Date().toISOString(),
+      payer: { email_address: order.user?.email || '' },
     }
-    const headers = {
-        "Content-Type":"application/json"
-    }
-    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL
-    }/api/create-checkout-session/${orderId}`,{
-        method:"POST",
-        headers:headers,
-        body:JSON.stringify(body)
-    });
 
-    const session = await response.json();
-
-    const result = stripe.redirectToCheckout({
-        sessionId:session.id
-    });
-
-    if(result.error){
-        console.log(result.error);
-    }
+    // reuse existing redux action to notify backend and refresh state
+    dispatch(payOrder(orderId, paymentResult))
   }
 
   return loading ? (
@@ -223,31 +240,28 @@ const OrderScreen = ({ match, history }) => {
                 </Row>
               </ListGroup.Item>
               {!order.isPaid && (
-                // <ListGroup.Item>
-                //   {loadingPay && <Loader />}
-
-                //   {isPending ? (
-                //     <Loader />
-                //   ) : (
-                //     <div>
-                //       {/* THIS BUTTON IS FOR TESTING! REMOVE BEFORE PRODUCTION! */}
-                //       {/* <Button
-                //         style={{ marginBottom: '10px' }}
-                //         onClick={onApproveTest}
-                //       >
-                //         Test Pay Order
-                //       </Button> */}
-
-
-                //     </div>
-                //   )}
-                // </ListGroup.Item>
-                <ListGroupItem><div>
-                <Button onClick={makePayment} >Checkout</Button></div>
-               </ListGroupItem>
+                <ListGroupItem>
+                  <div>
+                    <Button onClick={makePayment}>Checkout</Button>
+                  </div>
+                  
+                </ListGroupItem>
               )}
 
-              {loadingDeliver && <Loader />}
+              {userInfo &&
+                userInfo.isAdmin &&
+                !order.isPaid && (
+                  <ListGroup.Item>
+                    <Button
+                      type='button'
+                      className='btn btn-sm btn-success'
+                      onClick={markPaidAdmin}
+                      disabled={loadingPay}
+                    >
+                      Mark As Paid
+                    </Button>
+                  </ListGroup.Item>
+                )}
 
               {userInfo &&
                 userInfo.isAdmin &&
