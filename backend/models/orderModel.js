@@ -46,6 +46,7 @@ const orderSchema = mongoose.Schema(
       required: true,
       default: 0.0,
     },
+    status:{type: String, default:"Processing"},
     shippingPrice: {
       type: Number,
       required: true,

@@ -1,9 +1,7 @@
 const asyncHandler =  require('../middleware/asyncHandler.js');
 const Order =  require('../models/orderModel.js');
 const Product =  require('../models/productModel.js');
-const  calcPrices  =  require('../utils/calcPrices.js');
-
-
+const nodemailer = require('nodemailer')
 
 const addOrderItems = asyncHandler(async (req, res) => {
   const {
@@ -22,8 +20,8 @@ const addOrderItems = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Update stock and collect updated products
-    const updatedProducts = await Promise.all(
+    // 1️⃣ Update product stock
+    await Promise.all(
       orderItems.map(async (item) => {
         const product = await Product.findById(item.product);
 
@@ -35,18 +33,15 @@ const addOrderItems = asyncHandler(async (req, res) => {
           throw new Error(`Insufficient stock for ${product.name}`);
         }
 
-        // Atomic decrement and return updated doc
-        const updatedProduct = await Product.findByIdAndUpdate(
+        await Product.findByIdAndUpdate(
           item.product,
           { $inc: { countInStock: -item.qty } },
-          { new: true } // ensures updated value is returned
+          { new: true }
         );
-
-       
       })
     );
-  
-    // Create order
+
+    // 2️⃣ Create the order
     const order = new Order({
       orderItems,
       user: req.user._id,
@@ -57,16 +52,63 @@ const addOrderItems = asyncHandler(async (req, res) => {
       shippingPrice,
       totalPrice,
     });
-    
-    const createdOrder = await order.save();
 
-    // Return both order and updated product stocks
+    const createdOrder = await order.save();
+    
+    // 3️⃣ Send email to admin (YOU)
+    sendAdminEmail(createdOrder, req.user).catch((err) =>
+      console.error('Admin email send failed:', err.message)
+    );
+
+    // 4️⃣ Respond same as before
     res.status(201).json(createdOrder);
   } catch (error) {
     res.status(400);
     throw new Error(error.message || 'Order creation failed');
   }
 });
+
+// 💌 Helper: Send email to admin when order is placed
+const sendAdminEmail = async (order, user) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: process.env.SMTP_PORT || 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER, // your Gmail or SMTP username
+      pass: process.env.SMTP_PASS, // app password
+    },
+  });
+
+  const mailOptions = {
+    from: `"E-Commerce App" <${process.env.SMTP_USER}>`,
+    to: process.env.SMTP_USER, // 👈 your email
+    subject: `🛒 New Order Received - ${order._id}`,
+    html: `
+      <h2>New Order Placed!</h2>
+      <p><strong>Order ID:</strong> ${order._id}</p>
+  
+      <h3>Order Summary:</h3>
+      <ul>
+        ${order.orderItems
+          .map(
+            (item) =>
+              `<li>${item.name} - ${item.qty} × ₹${item.price} = ₹${item.qty * item.price}</li>`
+          )
+          .join('')}
+      </ul>
+      <p><strong>Total:</strong> ₹${order.totalPrice}</p>
+      <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+      <h3>Shipping Address:</h3>
+      <p>${order.shippingAddress.address}, ${order.shippingAddress.mobile}, ${order.shippingAddress.postalCode}</p>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+
+
 
 
 
@@ -101,6 +143,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 
   if (order) {
     order.isPaid = true
+    order.status="Paid"
     order.paidAt = Date.now()
     order.paymentResult = {
       id: req.body.id,
