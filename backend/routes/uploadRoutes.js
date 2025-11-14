@@ -1,58 +1,65 @@
-const path = require('path');
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs');
+const { put ,del} = require("@vercel/blob");
 
 const router = express.Router();
 
-// use a stable absolute uploads directory (process.cwd() is safer for different launch contexts)
-const uploadDir = path.resolve(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-console.log('Uploads directory:', uploadDir);
-
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename(req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const safeName = `img-${Date.now()}-${Math.floor(Math.random() * 1e6)}${ext}`;
-    cb(null, safeName);
-  },
-});
-
-function fileFilter(req, file, cb) {
-  const allowed = /^image\/(jpeg|jpg|png|webp)$/;
-  if (file && file.mimetype && allowed.test(file.mimetype.toLowerCase())) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files (jpeg, jpg, png, webp) are allowed'), false);
-  }
-}
-
+// Use memory storage (disk is not allowed on Vercel)
 const upload = multer({
-  storage,
-  fileFilter,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter(req, file, cb) {
+    const allowed = /^image\/(jpeg|jpg|png|webp)$/;
+    if (allowed.test(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files (jpeg, jpg, png, webp) are allowed"));
+    }
+  },
 });
 
-router.post('/', (req, res, next) => {
-  upload.single('image')(req, res, function(err) {
-    if (err) {
-      console.error('Multer error:', err);
-      return res.status(400).json({ message: err.message || 'Upload failed' });
-    }
+router.post("/", upload.single("image"), async (req, res) => {
+  try {
     if (!req.file) {
-      console.warn('No file in request');
-      return res.status(400).json({ message: 'No file uploaded. Ensure field name is "image".' });
+      return res.status(400).json({ message: "No file uploaded. Use field name 'image'." });
     }
-    // log saved file info
-    console.log('Uploaded file saved:', req.file.filename, 'size:', req.file.size);
-    const imageUrl = `/uploads/${req.file.filename}`;
-    return res.status(201).json({ image: imageUrl });
-  });
+
+    // generate safe unique filename
+    const ext = req.file.originalname.split('.').pop();
+    const filename = `img-${Date.now()}-${Math.floor(Math.random() * 1e6)}.${ext}`;
+
+    // Upload to Vercel Blob
+    const blob = await put(filename, req.file.buffer, {
+      access: "public",
+    });
+
+    console.log("File uploaded to blob:", blob.url);
+
+    return res.status(201).json({
+      image: blob.url, // public CDN URL
+    });
+
+  } catch (err) {
+    console.error("Upload error:", err);
+    return res.status(500).json({ message: "Upload failed", error: err.message });
+  }
+});
+
+
+
+router.delete("/delete", async (req, res) => {
+  try {
+    const { url } = req.body;
+
+    if (!url) return res.status(400).json({ message: "url required" });
+
+    await del(url);
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("Delete error:", err);
+    return res.status(500).json({ message: err.message });
+  }
 });
 
 module.exports = router;

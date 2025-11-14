@@ -17,6 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "@stripe/stripe-js": "^2.1.1",
+    "@vercel/blob": "^2.0.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "colors": "^1.4.0",
@@ -37,6 +38,6 @@
     "nodemon": "^2.0.21"
   },
   "engines": {
-  "node": "22.x"
-}
+    "node": "22.x"
+  }
 }
