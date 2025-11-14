@@ -7,43 +7,54 @@ const router = express.Router();
 // Use memory storage (disk is not allowed on Vercel)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
-  fileFilter(req, file, cb) {
-    const allowed = /^image\/(jpeg|jpg|png|webp)$/;
-    if (allowed.test(file.mimetype.toLowerCase())) {
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (allowed.includes(file.mimetype.toLowerCase())) {
       cb(null, true);
     } else {
-      cb(new Error("Only image files (jpeg, jpg, png, webp) are allowed"));
+      cb(new Error("Only JPEG, JPG, PNG, WEBP files are allowed"));
     }
   },
 });
 
+// ----------------------
+// Upload Route
+// ----------------------
 router.post("/", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded. Use field name 'image'." });
+      return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // generate safe unique filename
-    const ext = req.file.originalname.split('.').pop();
-    const filename = `img-${Date.now()}-${Math.floor(Math.random() * 1e6)}.${ext}`;
+    const fileName = `img-${Date.now()}-${req.file.originalname}`;
 
-    // Upload to Vercel Blob
-    const blob = await put(filename, req.file.buffer, {
+    // Upload directly to Vercel Blob Storage (NO TOKEN NEEDED)
+    const blob = await put(fileName, req.file.buffer, {
       access: "public",
+      token:process.env.BLOB_TOKEN
     });
-
-    console.log("File uploaded to blob:", blob.url);
 
     return res.status(201).json({
-      image: blob.url, // public CDN URL
+    
+      imageUrl: blob.url, // public URL
+  });
+  } catch (error) {
+    console.error("Upload error:", error);
+    return res.status(500).json({
+      message: "Upload failed",
+      error: error.message,
     });
-
-  } catch (err) {
-    console.error("Upload error:", err);
-    return res.status(500).json({ message: "Upload failed", error: err.message });
   }
 });
+
+
+
+
+
+
+
+
 
 
 

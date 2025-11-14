@@ -67,7 +67,7 @@ const ProductEditScreen = ({ match, history }) => {
 
       const { data } = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/upload`, formData, config)
 
-      setImage(data.image)
+      setImage(data.imageUrl)
       setUploading(false)
     } catch (error) {
       console.error(error)
