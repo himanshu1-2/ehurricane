@@ -1,25 +1,63 @@
-import React, { useState } from 'react'
-import { Form, Button } from 'react-bootstrap'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
+import { Button, Form } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
-import FormContainer from '../components/FormContainer'
-import CheckoutSteps from '../components/CheckoutSteps'
 import { saveShippingAddress } from '../actions/cartActions'
-
+import CheckoutSteps from '../components/CheckoutSteps'
+import FormContainer from '../components/FormContainer'
+import React from 'react'
 const ShippingScreen = ({ history }) => {
-  const cart = useSelector((state) => state.cart)
-  const { shippingAddress } = cart
-
-  const [address, setAddress] = useState(shippingAddress.address)
-  const [city, setCity] = useState(shippingAddress.city)
-  const [postalCode, setPostalCode] = useState(shippingAddress.postalCode)
-  const [mobile, setMobile] = useState(shippingAddress.mobile)
-
   const dispatch = useDispatch()
+
+  const cart = useSelector((state) => state.cart) || {}
+  const { shippingAddress: cartShipping = {} } = cart
+
+  const userLogin = useSelector((state) => state.userLogin) || {}
+  const { userInfo } = userLogin || {}
+
+  // initialize from cart first, fallback to user's saved profile shippingAddress if available
+  const [address, setAddress] = useState(cartShipping?.address || userInfo?.shippingAddress?.address || '')
+  const [city, setCity] = useState(cartShipping?.city || userInfo?.shippingAddress?.city || '')
+  const [postalCode, setPostalCode] = useState(cartShipping?.postalCode || userInfo?.shippingAddress?.postalCode || '')
+  const [mobile, setMobile] = useState(cartShipping?.mobile || userInfo?.shippingAddress?.mobile || '')
+
+  // keep fields in sync if cart or user profile updates after mount
+  useEffect(() => {
+    // prefer cart values when present, otherwise use user profile
+    setAddress(cartShipping?.address || userInfo?.shippingAddress?.address || '')
+    setCity(cartShipping?.city || userInfo?.shippingAddress?.city || '')
+    setPostalCode(cartShipping?.postalCode || userInfo?.shippingAddress?.postalCode || '')
+    setMobile(cartShipping?.mobile || userInfo?.shippingAddress?.mobile || '')
+  }, [cartShipping, userInfo])
 
   const submitHandler = (e) => {
     e.preventDefault()
-    dispatch(saveShippingAddress({ address, city, postalCode,  mobile }))
-    history.push('/payment')
+    dispatch(saveShippingAddress({ address, city, postalCode, mobile }))
+    // also persist to user profile if logged in
+    if (userInfo?.token) {
+      ;(async () => {
+        try {
+          const config = {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${userInfo.token}`,
+            },
+          }
+          await axios.put(
+            `${process.env.REACT_APP_BACKEND_URL || ''}/api/users/profile`,
+            { shippingAddress: { address, city, postalCode, mobile } },
+            config
+          )
+        } catch (err) {
+          // optional: handle error (toast/log). keep silent to not block checkout
+          // console.error('Failed to save shipping address to profile', err)
+        } finally {
+          history.push('/payment')
+        }
+      })()
+    } else {
+      history.push('/payment')
+    }
   }
 
   return (
@@ -60,7 +98,7 @@ const ShippingScreen = ({ history }) => {
           ></Form.Control>
         </Form.Group>
 
-        <Form.Group controlId='country'>
+        <Form.Group controlId='mobile'>
           <Form.Label>Mobile</Form.Label>
           <Form.Control
             type='number'

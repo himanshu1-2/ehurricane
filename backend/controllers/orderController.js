@@ -1,7 +1,32 @@
 const asyncHandler =  require('../middleware/asyncHandler.js');
 const Order =  require('../models/orderModel.js');
 const Product =  require('../models/productModel.js');
+const Coupon = require('../models/couponModel.js');
 const nodemailer = require('nodemailer')
+
+
+// Returns { discount, code } — discount is the amount to subtract from totalPrice.
+// WELCOME100 gives a flat ₹100 off on the user's first order when the coupon is active.
+// If couponCode is omitted, WELCOME100 is auto-applied for first-time buyers.
+const calculateCouponDiscount = async (userId, couponCode) => {
+  const previousOrder = await Order.findOne({ user: userId });
+  if (previousOrder) return { discount: 0, code: null };
+
+  const codeToCheck = couponCode
+    ? String(couponCode).toUpperCase().trim()
+    : 'WELCOME100';
+
+  const coupon = await Coupon.findOne({ code: codeToCheck, isActive: true });
+  if (!coupon) return { discount: 0, code: null };
+  if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+    return { discount: 0, code: null };
+  }
+
+  if (coupon.code === 'WELCOME100') {
+    return { discount: 100, code: coupon.code };
+  }
+  return { discount: 0, code: null };
+};
 
 const addOrderItems = asyncHandler(async (req, res) => {
   const {
@@ -12,6 +37,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
     taxPrice,
     shippingPrice,
     totalPrice,
+    couponCode
   } = req.body;
 
   if (!orderItems || orderItems.length === 0) {
@@ -41,7 +67,13 @@ const addOrderItems = asyncHandler(async (req, res) => {
       })
     );
 
-    // 2️⃣ Create the order
+    // 2️⃣ Apply coupon (server is source of truth) and create the order
+    const { discount, code: appliedCoupon } = await calculateCouponDiscount(
+      req.user._id,
+      couponCode
+    );
+    const finalTotal = Math.max(0, Number(totalPrice) - discount);
+
     const order = new Order({
       orderItems,
       user: req.user._id,
@@ -50,9 +82,11 @@ const addOrderItems = asyncHandler(async (req, res) => {
       itemsPrice,
       taxPrice,
       shippingPrice,
-      totalPrice,
+      totalPrice: finalTotal,
+      discount,
+      couponCode: appliedCoupon,
     });
-
+    
     const createdOrder = await order.save();
     
     // 3️⃣ Send email to admin (YOU)
@@ -192,8 +226,22 @@ const getMyOrders = asyncHandler(async (req, res) => {
 // @route   GET /api/orders
 // @access  Private/Admin
 const getOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({}).populate('user', 'id name').sort({_id:-1})
-  res.json(orders)
+  // pagination
+  const pageSize = Number(req.query.pageSize) || 5;
+  const page = Number(req.query.pageNumber) || 1;
+
+  const count = await Order.countDocuments({});
+  const orders = await Order.find({})
+    .populate('user', 'id name')
+    .sort({ createdAt: -1 })
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+
+  res.json({
+    orders,
+    page,
+    pages: Math.ceil(count / pageSize),
+  });
 })
 
 module.exports= {

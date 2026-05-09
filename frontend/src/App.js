@@ -1,26 +1,29 @@
-import React from 'react'
-import { BrowserRouter as Router, Route } from 'react-router-dom'
 import { Container } from 'react-bootstrap'
-import Header from './components/Header'
+import React from 'react'
+import { Route, BrowserRouter as Router } from 'react-router-dom'
 import Footer from './components/Footer'
-import HomeScreen from './screens/HomeScreen'
-import ProductScreen from './screens/ProductScreen'
+import Header from './components/Header'
+import Cancel from './screens/Cancel'
 import CartScreen from './screens/CartScreen'
+import CategoryScreen from './screens/CategoryScreen'
+import GenderScreen from './screens/GenderScreen'
+import HomeScreen from './screens/HomeScreen'
 import LoginScreen from './screens/LoginScreen'
-import RegisterScreen from './screens/RegisterScreen'
-import ProfileScreen from './screens/ProfileScreen'
-import ShippingScreen from './screens/ShippingScreen'
+import OrderListScreen from './screens/OrderListScreen'
+import OrderScreen from './screens/OrderScreen'
 import PaymentScreen from './screens/PaymentScreen'
 import PlaceOrderScreen from './screens/PlaceOrderScreen'
-import OrderScreen from './screens/OrderScreen'
-import UserListScreen from './screens/UserListScreen'
-import UserEditScreen from './screens/UserEditScreen'
-import ProductListScreen from './screens/ProductListScreen'
 import ProductEditScreen from './screens/ProductEditScreen'
-import OrderListScreen from './screens/OrderListScreen'
+import ProductListScreen from './screens/ProductListScreen'
+import ProductScreen from './screens/ProductScreen'
+import CouponListScreen from './screens/CouponListScreen'
+import CouponEditScreen from './screens/CouponEditScreen'
+import ProfileScreen from './screens/ProfileScreen'
+import RegisterScreen from './screens/RegisterScreen'
+import ShippingScreen from './screens/ShippingScreen'
 import success from './screens/success'
-import Cancel from './screens/Cancel'
-
+import UserEditScreen from './screens/UserEditScreen'
+import UserListScreen from './screens/UserListScreen'
 const App = () => {
   return (
     <Router>
@@ -40,6 +43,8 @@ const App = () => {
           <Route path='/admin/user/:id/edit' component={UserEditScreen} />
           <Route path='/success' component={success} />
           <Route path='/cancel' component={Cancel} />
+           <Route path='/category/:category' component={CategoryScreen} />
+           <Route path='/gender/:gender' component={GenderScreen} />
           <Route
             path='/admin/productlist'
             component={ProductListScreen}
@@ -50,8 +55,12 @@ const App = () => {
             component={ProductListScreen}
             exact
           />
+          
           <Route path='/admin/product/:id/edit' component={ProductEditScreen} />
           <Route path='/admin/orderlist' component={OrderListScreen} />
+          <Route path='/admin/couponlist' component={CouponListScreen} exact />
+          <Route path='/admin/coupon/create' component={CouponEditScreen} exact />
+          <Route path='/admin/coupon/:id/edit' component={CouponEditScreen} />
           <Route path='/search/:keyword' component={HomeScreen} exact />
           <Route path='/page/:pageNumber' component={HomeScreen} exact />
           <Route

@@ -15,11 +15,13 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    
     isAdmin: {
       type: Boolean,
-      required: true,
+     required: true,
       default: false,
     },
+     shippingAddress: { address:{type:String}, city: {type:String}, postalCode: {type:String}, mobile: {type:String} }
   },
   {
     timestamps: true,

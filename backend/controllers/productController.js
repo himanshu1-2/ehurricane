@@ -1,12 +1,11 @@
-const asyncHandler =  require('../middleware/asyncHandler.js');
-const Product =  require('../models/productModel.js');
-const path = require('path');
+const asyncHandler = require('../middleware/asyncHandler.js');
+const Product = require('../models/productModel.js');
 
-// @desc    Fetch all products
+// @desc    Fetch all products (with optional category filter & search)
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = process.env.PAGINATION_LIMIT;
+  const pageSize = 10;
   const page = Number(req.query.pageNumber) || 1;
 
   const keyword = req.query.keyword
@@ -18,8 +17,14 @@ const getProducts = asyncHandler(async (req, res) => {
       }
     : {};
 
-  const count = await Product.countDocuments({ ...keyword });
-  const products = await Product.find({ ...keyword })
+  // filter by category if provided
+  const categoryFilter = req.query.category
+    ? { category: { $regex: `^${req.query.category}$`, $options: 'i' } }
+    : {};
+  const gender = req.query.gender
+  const filter = { ...keyword, ...categoryFilter ,gender};
+  const count = await Product.countDocuments(filter);
+  const products = await Product.find(filter)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 
@@ -71,7 +76,7 @@ const createProduct = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, price, description, image, brand, category, countInStock } =
+  const { gender,name, price, description, image, brand, category, countInStock } =
     req.body;
 
   const product = await Product.findById(req.params.id);
@@ -84,6 +89,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.brand = brand;
     product.category = category;
     product.countInStock = countInStock;
+    product.gender = gender
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
@@ -158,7 +164,15 @@ const getTopProducts = asyncHandler(async (req, res) => {
   res.json(products);
 });
 
-module.exports= {
+// @desc    Get product categories (distinct)
+// @route   GET /api/products/categories
+// @access  Public
+const getCategories = asyncHandler(async (req, res) => {
+  const categories = await Product.distinct('category');
+  res.json(categories.filter(Boolean).sort());
+});
+
+module.exports = {
   getProducts,
   getProductById,
   createProduct,
@@ -166,4 +180,5 @@ module.exports= {
   deleteProduct,
   createProductReview,
   getTopProducts,
+  getCategories,
 };

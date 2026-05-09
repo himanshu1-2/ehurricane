@@ -1,0 +1,177 @@
+/* Premium carousel styles (Myntra / Giva inspired) */
+
+.premium-carousel {
+  margin-bottom: 1.5rem;
+  min-height: 440px; /* desktop reserved height */
+}
+
+.carousel-item-premium {
+  height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Keep carousel inner, items and slide the same fixed height (no height transitions) */
+.premium-carousel .carousel-inner,
+.premium-carousel .carousel-item,
+.premium-slide {
+  height: 440px;
+  min-height: 440px;
+  transition: none !important; /* prevent animation from changing layout */
+  will-change: auto;
+}
+
+/* Use a centered, contained image to preserve aspect ratio and avoid zoom/crop */
+.carousel-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* keep whole product visible */
+  margin: 0 auto;
+  object-position: center;
+  background-color: rgba(255,255,255,0.02);
+  /* disable any scale/brightness transitions */
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Ensure images fill the reserved area without changing container height */
+.premium-slide .carousel-img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain; /* keep entire product visible */
+  display: block;
+  margin: 0;
+}
+
+/* remove hover rules that changed image or slide */
+.premium-slide:hover,
+.premium-slide:hover .carousel-img {
+  transform: none !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+/* ensure no conflicting global rules force a zoom */
+.premium-slide .carousel-img { transform: none !important; }
+
+/* subtle dark gradient to ensure caption legibility */
+.slide-gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.28) 70%);
+  pointer-events: none;
+}
+
+/* overlay content card */
+.slide-overlay {
+  position: absolute;
+  left: 32px;
+  bottom: 28px;
+  width: min(48%, 620px);
+  z-index: 20;               /* higher z-index */
+  pointer-events: auto;      /* enable clicks */
+  padding: 18px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(21,34,56,0.12), rgba(21,34,56,0.06));
+  backdrop-filter: blur(6px);
+  color: #fff;
+}
+
+.overlay-top { display:flex; gap:8px; margin-bottom:6px; }
+.badge-new { background: rgba(40,167,69,0.18); color: #28a745; padding:4px 8px; border-radius:8px; font-weight:600; font-size:0.8rem; }
+.badge-sale { background: rgba(255,111,97,0.12); color: var(--accent); padding:4px 8px; border-radius:8px; font-weight:700; font-size:0.8rem; }
+
+.overlay-title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.1;
+  text-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+
+.overlay-meta { display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:12px; }
+.overlay-brand { color: rgba(255,255,255,0.85); font-size:0.9rem; }
+
+.overlay-price { display:flex; gap:10px; align-items:center; }
+.price-current { font-weight:800; font-size:1.05rem; color:#fff; }
+.price-old { color: rgba(255,255,255,0.72); text-decoration: line-through; font-size:0.9rem; }
+
+.overlay-cta { margin-top:12px; }
+.shop-btn {
+  background: #ffffff;
+  color: var(--heading);
+  border-radius: 8px;
+  font-weight: 700;
+  padding: 8px 14px;
+  box-shadow: 0 10px 24px rgba(21,34,56,0.14);
+  position: relative;
+  z-index: 25;
+  pointer-events: auto;
+}
+.shop-btn:hover { transform: translateY(-2px); }
+
+/* controls & indicators contrast */
+.premium-carousel .carousel-control-prev-icon,
+.premium-carousel .carousel-control-next-icon {
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.35));
+}
+
+.premium-carousel .carousel-indicators li { background-color: rgba(255,255,255,0.6); }
+.premium-carousel .carousel-indicators .active { background-color: var(--accent); }
+
+/* responsive */
+@media (max-width: 992px) {
+  .premium-carousel { min-height: 320px; }
+  .premium-carousel .carousel-inner,
+  .premium-carousel .carousel-item,
+  .premium-slide { height: 320px; min-height: 320px; }
+}
+@media (max-width: 576px) {
+  .premium-carousel { min-height: 220px; }
+  .premium-carousel .carousel-inner,
+  .premium-carousel .carousel-item,
+  .premium-slide { height: 220px; min-height: 220px; }
+}
+
+/* Keep indicators/controls visually unaffected but not affecting layout */
+.premium-carousel .carousel-indicators,
+.premium-carousel .carousel-control-next,
+.premium-carousel .carousel-control-prev {
+  position: absolute;
+  z-index: 6;
+}
+
+/* ensure overlay is above images and interactive */
+.slide-overlay {
+  position: absolute;
+  left: 32px;
+  bottom: 28px;
+  width: min(48%, 620px);
+  z-index: 20;               /* higher z-index */
+  pointer-events: auto;      /* enable clicks */
+  padding: 18px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(21,34,56,0.12), rgba(21,34,56,0.06));
+  backdrop-filter: blur(6px);
+  color: #fff;
+}
+
+/* make CTA clearly above everything and clickable */
+.shop-btn {
+  position: relative;
+  z-index: 25;
+  pointer-events: auto;
+}
+
+/* ensure the clickable slide container doesn't swallow pointer-events for children */
+.premium-slide, .carousel-link {
+  cursor: pointer;
+  pointer-events: auto;
+}

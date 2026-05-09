@@ -26,7 +26,9 @@ const orderSchema = mongoose.Schema(
       postalCode: { type: String, required: true },
       mobile: { type: String, required: true,maxLength:10 },
     },
-   
+   isFirstTimeBuyer: {
+      type: Boolean,
+      default: true,},
     paymentMethod: {
       type: String,
       required: true,
@@ -57,6 +59,14 @@ const orderSchema = mongoose.Schema(
       type: Number,
       required: true,
       default: 0.0,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
+    couponCode: {
+      type: String,
+      default: null,
     },
     isPaid: {
       type: Boolean,

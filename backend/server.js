@@ -10,6 +10,7 @@ const productRoutes =  require('./routes/productRoutes.js');
 const userRoutes =  require('./routes/userRoutes.js');
 const orderRoutes =  require('./routes/orderRoutes.js');
 const uploadRoutes =  require('./routes/uploadRoutes.js');
+const couponRoutes =  require('./routes/couponRoutes.js');
 const { notFound, errorHandler } =  require('./middleware/errorMiddleware.js');
 const cors =  require('cors');
 const Stripe =  require('stripe');
@@ -30,6 +31,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/coupons', couponRoutes);
 
 app.post("/api/create-checkout-session/:id",async(req,res)=>{
   try{
@@ -61,7 +63,7 @@ const obj={
 
 }
 
-console.log(obj)
+//console.log(obj)
 // const session = await stripe.checkout.sessions.create({
 //   payment_method_types: ["card"],
 //   line_items: [

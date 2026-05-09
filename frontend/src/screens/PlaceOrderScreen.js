@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import CheckoutSteps from '../components/CheckoutSteps'
 import { createOrder } from '../actions/orderActions'
+import { getApplicableCoupon } from '../actions/couponActions'
 import { ORDER_CREATE_RESET } from '../constants/orderConstants'
 import { USER_DETAILS_RESET } from '../constants/userConstants'
 
@@ -18,6 +19,16 @@ const PlaceOrderScreen = ({ history }) => {
   } else if (!cart.paymentMethod) {
     history.push('/payment')
   }
+
+  const couponApplicable = useSelector((state) => state.couponApplicable) || {}
+  const { applicable } = couponApplicable
+  const appliedCoupon = applicable?.code || null
+  const discount = Number(applicable?.discount) || 0
+
+  useEffect(() => {
+    dispatch(getApplicableCoupon())
+  }, [dispatch])
+
   //   Calculate prices
   const addDecimals = (num) => {
     return (Math.round(num * 100) / 100).toFixed(2)
@@ -29,11 +40,11 @@ const PlaceOrderScreen = ({ history }) => {
   //cart.shippingPrice = addDecimals(cart.itemsPrice > 100 ? 0 : 100)
   cart.shippingPrice = 0
   cart.taxPrice = 0
-  cart.totalPrice = (
+  const subtotal =
     Number(cart.itemsPrice) +
     Number(cart.shippingPrice) +
     Number(cart.taxPrice)
-  ).toFixed(2)
+  cart.totalPrice = Math.max(0, subtotal - discount).toFixed(2)
 
   const orderCreate = useSelector((state) => state.orderCreate)
   const { order, success, error } = orderCreate
@@ -57,6 +68,7 @@ const PlaceOrderScreen = ({ history }) => {
         shippingPrice: cart.shippingPrice,
         taxPrice: cart.taxPrice,
         totalPrice: cart.totalPrice,
+        couponCode: appliedCoupon,
       })
     )
   }
@@ -140,6 +152,17 @@ const PlaceOrderScreen = ({ history }) => {
                   <Col>₹ {cart.taxPrice}</Col>
                 </Row>
               </ListGroup.Item>
+              {discount > 0 && (
+                <ListGroup.Item>
+                  <Row>
+                    <Col>Discount {appliedCoupon && `(${appliedCoupon})`}</Col>
+                    <Col>- ₹ {discount.toFixed(2)}</Col>
+                  </Row>
+                  <small className='text-success'>
+                    First-order coupon auto-applied
+                  </small>
+                </ListGroup.Item>
+              )}
               <ListGroup.Item>
                 <Row>
                   <Col>Total</Col>

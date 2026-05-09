@@ -1,12 +1,13 @@
 import axios from 'axios'
-import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Form, Button } from 'react-bootstrap'
+import React from 'react'
+import { useEffect, useState } from 'react'
+import { Button, Form } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
-import Message from '../components/Message'
-import Loader from '../components/Loader'
-import FormContainer from '../components/FormContainer'
+import { Link } from 'react-router-dom'
 import { listProductDetails, updateProduct } from '../actions/productActions'
+import FormContainer from '../components/FormContainer'
+import Loader from '../components/Loader'
+import Message from '../components/Message'
 import { PRODUCT_UPDATE_RESET } from '../constants/productConstants'
 
 const ProductEditScreen = ({ match, history }) => {
@@ -17,6 +18,7 @@ const ProductEditScreen = ({ match, history }) => {
   const [image, setImage] = useState('')
   const [brand, setBrand] = useState('')
   const [category, setCategory] = useState('')
+  const [gender, setGender] = useState('') // added gender state
   const [countInStock, setCountInStock] = useState(0)
   const [description, setDescription] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -46,6 +48,7 @@ const ProductEditScreen = ({ match, history }) => {
         setImage(product.image)
         setBrand(product.brand)
         setCategory(product.category)
+        setGender(product.gender || '') // set gender from product
         setCountInStock(product.countInStock)
         setDescription(product.description)
       }
@@ -85,6 +88,7 @@ const ProductEditScreen = ({ match, history }) => {
         image,
         brand,
         category,
+        gender, // include gender in update payload
         description,
         countInStock,
       })
@@ -171,6 +175,20 @@ const ProductEditScreen = ({ match, history }) => {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               ></Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId='gender'>
+              <Form.Label>Gender</Form.Label>
+              <Form.Control
+                as='select'
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+              >
+                <option value=''>Select gender</option>
+                <option value='male'>Men</option>
+                <option value='female'>Women</option>
+                <option value='unisex'>Unisex</option>
+              </Form.Control>
             </Form.Group>
 
             <Form.Group controlId='description'>
