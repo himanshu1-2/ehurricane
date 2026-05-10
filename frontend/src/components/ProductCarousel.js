@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Button, Carousel, Image } from 'react-bootstrap'
+import { Carousel, Image } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
 import { useHistory } from 'react-router-dom'
 import { listTopProducts } from '../actions/productActions'
