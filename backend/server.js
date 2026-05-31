@@ -11,6 +11,7 @@ const userRoutes =  require('./routes/userRoutes.js');
 const orderRoutes =  require('./routes/orderRoutes.js');
 const uploadRoutes =  require('./routes/uploadRoutes.js');
 const couponRoutes =  require('./routes/couponRoutes.js');
+const vendorRoutes =  require('./routes/vendorRoutes.js');
 const { notFound, errorHandler } =  require('./middleware/errorMiddleware.js');
 const cors =  require('cors');
 const Stripe =  require('stripe');
@@ -32,6 +33,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/coupons', couponRoutes);
+app.use('/api/vendors', vendorRoutes);
 
 app.post("/api/create-checkout-session/:id",async(req,res)=>{
   try{

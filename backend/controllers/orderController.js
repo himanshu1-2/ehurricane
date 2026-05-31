@@ -1,8 +1,25 @@
 const asyncHandler =  require('../middleware/asyncHandler.js');
 const Order =  require('../models/orderModel.js');
 const Product =  require('../models/productModel.js');
+const User =  require('../models/userModel.js');
 const Coupon = require('../models/couponModel.js');
 const nodemailer = require('nodemailer')
+const {
+  sendOrderPushToAdmin,
+  sendOrderPushToVendors,
+  sendOrderReadyPushToCustomer,
+} = require('../utils/sendPushNotification.js');
+
+// Collect the FCM tokens of the vendor(s) that own the products in an order.
+const getVendorTokensForOrder = async (orderItems) => {
+  const productIds = orderItems.map((item) => item.product);
+  const products = await Product.find({ _id: { $in: productIds } }).select('user');
+  const vendorUserIds = [
+    ...new Set(products.map((p) => String(p.user)).filter(Boolean)),
+  ];
+  const vendors = await User.find({ _id: { $in: vendorUserIds } }).select('fcmToken');
+  return vendors.map((v) => v.fcmToken).filter(Boolean);
+};
 
 
 // Returns { discount, code } — discount is the amount to subtract from totalPrice.
@@ -58,6 +75,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
         if (product.countInStock < item.qty) {
           throw new Error(`Insufficient stock for ${product.name}`);
         }
+        
 
         await Product.findByIdAndUpdate(
           item.product,
@@ -90,11 +108,21 @@ const addOrderItems = asyncHandler(async (req, res) => {
     const createdOrder = await order.save();
     
     // 3️⃣ Send email to admin (YOU)
-    sendAdminEmail(createdOrder, req.user).catch((err) =>
-      console.error('Admin email send failed:', err.message)
+    // sendAdminEmail(createdOrder, req.user).catch((err) =>
+    //   console.error('Admin email send failed:', err.message)
+    // );
+
+    // 4️⃣ Send mobile push notification to admin via FCM
+    sendOrderPushToAdmin(createdOrder).catch((err) =>
+      console.error('Admin push send failed:', err.message)
     );
 
-    // 4️⃣ Respond same as before
+    // 4️⃣b Notify the vendor(s) that own the ordered products
+    getVendorTokensForOrder(createdOrder.orderItems)
+      .then((tokens) => sendOrderPushToVendors(createdOrder, tokens))
+      .catch((err) => console.error('Vendor push send failed:', err.message));
+
+    // 5️⃣ Respond same as before
     res.status(201).json(createdOrder);
   } catch (error) {
     res.status(400);
@@ -214,6 +242,41 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
   }
 })
 
+// Statuses that mean the order is being prepared — triggers a customer push.
+const READY_STATUSES = ['Preparing', 'Getting Ready', 'Ready'];
+
+// @desc    Update order status (e.g. mark "Preparing")
+// @route   PUT /api/orders/:id/status
+// @access  Private/Vendor (admin allowed)
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  if (!status) {
+    res.status(400);
+    throw new Error('status is required');
+  }
+
+  const order = await Order.findById(req.params.id).populate(
+    'user',
+    'name fcmToken'
+  );
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  order.status = status;
+  const updatedOrder = await order.save();
+
+  // Notify the customer when their order starts getting ready.
+  if (READY_STATUSES.includes(status) && order.user && order.user.fcmToken) {
+    sendOrderReadyPushToCustomer(updatedOrder, order.user.fcmToken).catch((err) =>
+      console.error('Customer push send failed:', err.message)
+    );
+  }
+
+  res.json(updatedOrder);
+});
+
 // @desc    Get logged in user orders
 // @route   GET /api/orders/myorders
 // @access  Private
@@ -249,6 +312,7 @@ module.exports= {
   getOrderById,
   updateOrderToPaid,
   updateOrderToDelivered,
+  updateOrderStatus,
   getMyOrders,
   getOrders,
 }

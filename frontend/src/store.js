@@ -36,6 +36,7 @@ import {
   couponUpdateReducer,
   couponApplicableReducer,
 } from './reducers/couponReducers'
+import { vendorRegisterReducer } from './reducers/vendorReducers'
 
 const reducer = combineReducers({
   productList: productListReducer,
@@ -65,6 +66,7 @@ const reducer = combineReducers({
   couponCreate: couponCreateReducer,
   couponUpdate: couponUpdateReducer,
   couponApplicable: couponApplicableReducer,
+  vendorRegister: vendorRegisterReducer,
 })
 
 const cartItemsFromStorage = localStorage.getItem('cartItems')

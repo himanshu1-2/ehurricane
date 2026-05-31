@@ -6,6 +6,7 @@ import Message from '../components/Message'
 import Loader from '../components/Loader'
 import FormContainer from '../components/FormContainer'
 import { login } from '../actions/userActions'
+import { getToken } from '../firebase'
 
 const LoginScreen = ({ location, history }) => {
   const [email, setEmail] = useState('')
@@ -24,9 +25,21 @@ const LoginScreen = ({ location, history }) => {
     }
   }, [history, userInfo, redirect])
 
-  const submitHandler = (e) => {
+  const submitHandler = async (e) => {
     e.preventDefault()
-    dispatch(login(email, password))
+    let fcmToken = null
+    try {
+      // Request permission and get the FCM token so push notifications
+      // (new orders for vendors, "getting ready" for customers) can reach this device.
+      const permission = await Notification.requestPermission()
+      console.log('permission', permission)
+      if (permission === 'granted') {
+        fcmToken = await getToken()
+      }
+    } catch (error) {
+      console.error('Error getting FCM token:', error)
+    }
+    dispatch(login(email, password, fcmToken))
   }
 
   return (

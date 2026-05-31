@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Form, Button, Row, Col } from 'react-bootstrap'
+
+import React,{ useEffect, useState } from 'react'
+import { Button, Col, Form, Row } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
-import Message from '../components/Message'
-import Loader from '../components/Loader'
-import FormContainer from '../components/FormContainer'
+import { Link } from 'react-router-dom'
 import { register } from '../actions/userActions'
+import FormContainer from '../components/FormContainer'
+import Loader from '../components/Loader'
+import Message from '../components/Message'
+import { getToken } from '../firebase'
 
 const RegisterScreen = ({ location, history }) => {
   const [name, setName] = useState('')
@@ -27,12 +29,29 @@ const RegisterScreen = ({ location, history }) => {
     }
   }, [history, userInfo, redirect])
 
-  const submitHandler = (e) => {
+  const submitHandler = async (e) => {
     e.preventDefault()
     if (password !== confirmPassword) {
       setMessage('Passwords do not match')
     } else {
-      dispatch(register(name, email, password))
+      let fcmToken = null
+      try {
+        if (typeof Notification !== 'undefined') {
+          if (Notification.permission === 'default') {
+            await Notification.requestPermission()
+          }
+
+          if (Notification.permission === 'granted') {
+            fcmToken = await getToken()
+          } else {
+            console.warn('Push notifications are not enabled:', Notification.permission)
+          }
+        }
+      } catch (error) {
+        console.error('Error getting FCM token:', error)
+      }
+
+      dispatch(register(name, email, password, fcmToken))
     }
   }
 
@@ -93,6 +112,14 @@ const RegisterScreen = ({ location, history }) => {
           Have an Account?{' '}
           <Link to={redirect ? `/login?redirect=${redirect}` : '/login'}>
             Login
+          </Link>
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          Want to sell tiffins?{' '}
+          <Link to={redirect ? `/register/vendor?redirect=${redirect}` : '/register/vendor'}>
+            Register as Vendor
           </Link>
         </Col>
       </Row>

@@ -20,6 +20,7 @@ import CouponListScreen from './screens/CouponListScreen'
 import CouponEditScreen from './screens/CouponEditScreen'
 import ProfileScreen from './screens/ProfileScreen'
 import RegisterScreen from './screens/RegisterScreen'
+import VendorRegisterScreen from './screens/VendorRegisterScreen'
 import ShippingScreen from './screens/ShippingScreen'
 import success from './screens/success'
 import UserEditScreen from './screens/UserEditScreen'
@@ -35,7 +36,15 @@ const App = () => {
           <Route path='/payment' component={PaymentScreen} />
           <Route path='/placeorder' component={PlaceOrderScreen} />
           <Route path='/login' component={LoginScreen} />
-          <Route path='/register' component={RegisterScreen} />
+          <Route path='/register/vendor' component={VendorRegisterScreen} exact />
+          <Route path='/vendor/cuisines' component={ProductListScreen} exact />
+          <Route
+            path='/vendor/cuisines/:pageNumber'
+            component={ProductListScreen}
+            exact
+          />
+          <Route path='/vendor/product/:id/edit' component={ProductEditScreen} />
+          <Route path='/register' component={RegisterScreen} exact />
           <Route path='/profile' component={ProfileScreen} />
           <Route path='/product/:id' component={ProductScreen} />
           <Route path='/cart/:id?' component={CartScreen} />

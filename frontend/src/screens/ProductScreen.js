@@ -16,7 +16,7 @@ const ProductScreen = ({ history, match }) => {
   const [qty, setQty] = useState(1)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
-
+  //const []
   const dispatch = useDispatch()
 
   const productDetails = useSelector((state) => state.productDetails)
@@ -59,6 +59,7 @@ const ProductScreen = ({ history, match }) => {
 
   return (
     <>
+    
       <Link className='btn btn-light my-3' to='/'>
         Go Back
       </Link>

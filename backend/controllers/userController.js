@@ -7,15 +7,21 @@ const User =  require('../models/userModel.js');
 // @route   POST /api/users/auth
 // @access  Public
 const authUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  
+  const { email, password, fcmToken } = req.body;
+
   const user = await User.findOne({ email });
-  
+
   if (user && (await user.matchPassword(password))) {
+    // Refresh the device token so push notifications reach the latest device.
+    if (fcmToken && fcmToken !== user.fcmToken) {
+      user.fcmToken = fcmToken;
+      await user.save();
+    }
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       isAdmin: user.isAdmin,
       token: generateToken(user._id),
     });
@@ -29,7 +35,7 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role, fcmToken } = req.body;
 
   const userExists = await User.findOne({ email });
 
@@ -38,10 +44,15 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error('User already exists');
   }
 
+  // Only allow 'user' or 'vendor' via public registration; admins are seeded
+  const safeRole = role === 'vendor' ? 'vendor' : 'user';
+
   const user = await User.create({
     name,
     email,
     password,
+    role: safeRole,
+    fcmToken,
   });
 
   if (user) {
@@ -50,6 +61,7 @@ const registerUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       isAdmin: user.isAdmin,
       token: generateToken(user._id),
     });
@@ -81,6 +93,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       isAdmin: user.isAdmin,
     });
   } else {
@@ -109,6 +122,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
+      role: updatedUser.role,
       isAdmin: updatedUser.isAdmin,
     });
   } else {
@@ -166,7 +180,11 @@ const updateUser = asyncHandler(async (req, res) => {
   if (user) {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-    user.isAdmin = Boolean(req.body.isAdmin);
+    if (req.body.role && ['user', 'vendor', 'admin'].includes(req.body.role)) {
+      user.role = req.body.role;
+    } else if (req.body.isAdmin !== undefined) {
+      user.role = Boolean(req.body.isAdmin) ? 'admin' : 'user';
+    }
 
     const updatedUser = await user.save();
 
@@ -174,6 +192,7 @@ const updateUser = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
+      role: updatedUser.role,
       isAdmin: updatedUser.isAdmin,
     });
   } else {

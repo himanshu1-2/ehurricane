@@ -12,6 +12,8 @@ import { PRODUCT_UPDATE_RESET } from '../constants/productConstants'
 
 const ProductEditScreen = ({ match, history }) => {
   const productId = match.params.id
+  const isVendorRoute = match.path.startsWith('/vendor')
+  const listPath = isVendorRoute ? '/vendor/cuisines' : '/admin/productlist'
 
   const [name, setName] = useState('')
   const [price, setPrice] = useState(0)
@@ -38,7 +40,7 @@ const ProductEditScreen = ({ match, history }) => {
   useEffect(() => {
     if (successUpdate) {
       dispatch({ type: PRODUCT_UPDATE_RESET })
-      history.push('/admin/productlist')
+      history.push(listPath)
     } else {
       if (!product.name || product._id !== productId) {
         dispatch(listProductDetails(productId))
@@ -97,7 +99,7 @@ const ProductEditScreen = ({ match, history }) => {
 
   return (
     <>
-      <Link to='/admin/productlist' className='btn btn-light my-3'>
+      <Link to={listPath} className='btn btn-light my-3'>
         Go Back
       </Link>
       <FormContainer>

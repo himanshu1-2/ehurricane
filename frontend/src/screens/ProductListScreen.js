@@ -7,6 +7,7 @@ import Loader from '../components/Loader'
 import Paginate from '../components/Paginate'
 import {
   listProducts,
+  listMyProducts,
   deleteProduct,
   createProduct,
 } from '../actions/productActions'
@@ -38,15 +39,27 @@ const ProductListScreen = ({ history, match }) => {
   const userLogin = useSelector((state) => state.userLogin)
   const { userInfo } = userLogin
 
+  const isAdmin = userInfo && userInfo.isAdmin
+  const isVendor = userInfo && userInfo.role === 'vendor' && !isAdmin
+  const vendorMode = match.path.startsWith('/vendor') || isVendor
+
+  const listBasePath = vendorMode ? '/vendor/cuisines' : '/admin/productlist'
+  const editBasePath = vendorMode ? '/vendor/product' : '/admin/product'
+  const heading = vendorMode ? 'My Cuisines' : 'Products'
+  const createLabel = vendorMode ? 'Add Cuisine' : 'Create Product'
+
   useEffect(() => {
     dispatch({ type: PRODUCT_CREATE_RESET })
 
-    if (!userInfo || !userInfo.isAdmin) {
+    if (!userInfo || (!isAdmin && !isVendor)) {
       history.push('/login')
+      return
     }
 
     if (successCreate) {
-      history.push(`/admin/product/${createdProduct._id}/edit`)
+      history.push(`${editBasePath}/${createdProduct._id}/edit`)
+    } else if (vendorMode) {
+      dispatch(listMyProducts('', pageNumber))
     } else {
       dispatch(listProducts('', pageNumber))
     }
@@ -54,10 +67,14 @@ const ProductListScreen = ({ history, match }) => {
     dispatch,
     history,
     userInfo,
+    isAdmin,
+    isVendor,
+    vendorMode,
     successDelete,
     successCreate,
     createdProduct,
     pageNumber,
+    editBasePath,
   ])
 
   const deleteHandler = (id) => {
@@ -74,11 +91,11 @@ const ProductListScreen = ({ history, match }) => {
     <>
       <Row className='align-items-center'>
         <Col>
-          <h1>Products</h1>
+          <h1>{heading}</h1>
         </Col>
         <Col className='text-right'>
           <Button className='my-3' onClick={createProductHandler}>
-            <i className='fas fa-plus'></i> Create Product
+            <i className='fas fa-plus'></i> {createLabel}
           </Button>
         </Col>
       </Row>
@@ -112,7 +129,7 @@ const ProductListScreen = ({ history, match }) => {
                   <td>{product.category}</td>
                   <td>{product.brand}</td>
                   <td>
-                    <LinkContainer to={`/admin/product/${product._id}/edit`}>
+                    <LinkContainer to={`${editBasePath}/${product._id}/edit`}>
                       <Button variant='light' className='btn-sm'>
                         <i className='fas fa-edit'></i>
                       </Button>
@@ -129,7 +146,12 @@ const ProductListScreen = ({ history, match }) => {
               ))}
             </tbody>
           </Table>
-          <Paginate pages={pages} page={page} isAdmin={true} />
+          <Paginate
+            pages={pages}
+            page={page}
+            isAdmin={!vendorMode}
+            basePath={listBasePath}
+          />
         </>
       )}
     </>

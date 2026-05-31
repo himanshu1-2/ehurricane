@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { PayPalButton } from 'react-paypal-button-v2'
+import React, { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Row, Col, ListGroup, Image, Card, Button,ListGroupItem } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
-import {loadStripe} from '@stripe/stripe-js';
 import {
   getOrderDetails,
   payOrder,
@@ -20,8 +17,6 @@ import {
 const OrderScreen = ({ match, history }) => {
   const orderId = match.params.id
 
-  const [sdkReady, setSdkReady] = useState(false)
-
   const dispatch = useDispatch()
 
   const orderDetails = useSelector((state) => state.orderDetails)
@@ -31,7 +26,7 @@ const OrderScreen = ({ match, history }) => {
   const { loading: loadingPay, success: successPay } = orderPay
 
   const orderDeliver = useSelector((state) => state.orderDeliver)
-  const { loading: loadingDeliver, success: successDeliver } = orderDeliver
+  const { success: successDeliver } = orderDeliver
 
   const userLogin = useSelector((state) => state.userLogin)
   const { userInfo } = userLogin
@@ -68,14 +63,8 @@ const OrderScreen = ({ match, history }) => {
       dispatch({ type: ORDER_PAY_RESET })
       dispatch({ type: ORDER_DELIVER_RESET })
       dispatch(getOrderDetails(orderId))
-    } else if (!order.isPaid) {
-      if (!window.paypal) {
-        //addPayPalScript()
-      } else {
-        setSdkReady(true)
-      }
     }
-  }, [dispatch, orderId, successPay, successDeliver, order])
+  }, [dispatch, orderId, successPay, successDeliver, order, history, userInfo])
 
   // const successPaymentHandler = (paymentResult) => {
   //   console.log(paymentResult)

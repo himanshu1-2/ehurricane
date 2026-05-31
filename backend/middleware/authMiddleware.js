@@ -29,7 +29,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
 // User must be an admin
 const admin = (req, res, next) => {
-  if (req.user && req.user.isAdmin) {
+  if (req.user && (req.user.role === 'admin' || req.user.isAdmin)) {
     next();
   } else {
     res.status(401);
@@ -37,4 +37,19 @@ const admin = (req, res, next) => {
   }
 };
 
-module.exports= { protect, admin };
+// User must be a vendor (admin also allowed)
+const vendor = (req, res, next) => {
+  if (
+    req.user &&
+    (req.user.role === 'vendor' ||
+      req.user.role === 'admin' ||
+      req.user.isAdmin)
+  ) {
+    next();
+  } else {
+    res.status(401);
+    throw new Error('Not authorized as a vendor');
+  }
+};
+
+module.exports= { protect, admin, vendor };
