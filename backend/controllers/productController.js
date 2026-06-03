@@ -22,13 +22,15 @@ const getProducts = asyncHandler(async (req, res) => {
     ? { category: { $regex: `^${req.query.category}$`, $options: 'i' } }
     : {};
   let gender
-  const filter= { ...keyword, ...categoryFilter };
+  const filter= { ...keyword, ...categoryFilter ,
+    countInStock: { $gt: 0 }
+};
   if(req.query.gender){
     filter = { ...keyword, ...categoryFilter ,gender};
   }
    
   const count = await Product.countDocuments(filter);
-  console.log(filter)
+  //console.log(filter)
   const products = await Product.find(filter)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
