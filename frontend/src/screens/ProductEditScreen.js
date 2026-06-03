@@ -57,7 +57,7 @@ const ProductEditScreen = ({ match, history }) => {
         setDescription(product.description)
       }
     }
-  }, [dispatch, history, productId, product, successUpdate])
+  }, [dispatch, history, productId, product, successUpdate,listPath])
 
   const uploadFileHandler = async (e) => {
     const file = e.target.files[0]
