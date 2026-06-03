@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { put ,del} = require("@vercel/blob");
-const { protect ,admin } = require('../middleware/authMiddleware');
+const { protect ,admin,vendor } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ const upload = multer({
 // ----------------------
 // Upload Route
 // ----------------------
-router.post("/", protect,admin ,upload.single("image"), async (req, res) => {
+router.post("/", protect,vendor,upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
